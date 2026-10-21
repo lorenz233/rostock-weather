@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rostock Sky</title>
+<meta name="description" content="Cloud cover, UV index and visibility in Rostock for today and the next three days.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2324507A'/%3E%3Crect x='4' y='10' width='6' height='12' fill='%236FA8D6'/%3E%3Crect x='13' y='10' width='6' height='12' fill='%23AEB8BF'/%3E%3Crect x='22' y='10' width='6' height='12' fill='%231D2B45'/%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #E7ECEF;
+  --surface: #F4F7F8;
+  --ink: #152A3A;
+  --muted: #536571;
+  --line: #C6D0D6;
+  --hansa: #24507A;
+  --focus: #24507A;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #13202C;
+    --surface: #1A2A38;
+    --ink: #E3EAEE;
+    --muted: #94A4AF;
+    --line: #2C3E4D;
+    --hansa: #8DB6DF;
+    --focus: #8DB6DF;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #13202C; --surface: #1A2A38; --ink: #E3EAEE; --muted: #94A4AF;
+  --line: #2C3E4D; --hansa: #8DB6DF; --focus: #8DB6DF; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Archivo", system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+@media (min-width: 720px) { .wrap { padding: 0 32px; } }
+
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 2px; }
+
+/* Header */
+.top {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap; padding: 28px 0 8px;
+}
+h1 {
+  margin: 0;
+  font-size: clamp(2.6rem, 9vw, 4.6rem);
+  font-weight: 800;
+  font-stretch: 62%;
+  font-variation-settings: "wdth" 62;
+  line-height: .9;
+  letter-spacing: -.01em;
+  color: var(--hansa);
+}
+.status { margin: 0; color: var(--muted); font-size: .9rem; display: flex; align-items: center; gap: 12px; }
+button.refresh {
+  font: inherit; font-size: .9rem; color: var(--ink);
+  background: transparent; border: 1px solid var(--line); border-radius: 999px;
+  padding: 6px 14px; cursor: pointer;
+}
+button.refresh:hover { border-color: var(--muted); }
+button.refresh[disabled] { opacity: .5; cursor: progress; }
+
+/* Now */
+.now {
+  display: grid; gap: 8px 40px; align-items: end;
+  grid-template-columns: auto 1fr;
+  padding: 8px 0 28px;
+}
+.temp {
+  font-size: clamp(6rem, 24vw, 11rem);
+  font-weight: 200;
+  font-variation-settings: "wdth" 125;
+  line-height: .82;
+  letter-spacing: -.04em;
+  margin: 0;
+}
+.temp .deg { font-weight: 200; color: var(--muted); }
+.cond { margin: 0; font-size: clamp(1.35rem, 3.4vw, 1.9rem); font-weight: 600; line-height: 1.15; }
+.feels { margin: 4px 0 0; color: var(--muted); }
+.now-stats {
+  grid-column: 1 / -1;
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0; margin: 20px 0 0; border-top: 1px solid var(--line);
+}
+.now-stats div { padding: 12px 12px 0 0; }
+.now-stats dt { color: var(--muted); font-size: .85rem; }
+.now-stats dd { margin: 2px 0 0; font-size: 1.35rem; font-weight: 600; font-variation-settings: "wdth" 110; }
+.now-stats dd small { display: block; font-size: .85rem; font-weight: 400; color: var(--muted); font-variation-settings: "wdth" 100; }
+@media (max-width: 640px) {
+  .now { grid-template-columns: 1fr; }
+  .now-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .now-stats div:last-child { grid-column: 1 / -1; }
+}
+
+/* Sky ribbon */
+h2 { font-size: 1.1rem; font-weight: 700; margin: 0 0 12px; }
+.sky { padding: 8px 0 32px; }
+.sky-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.legend { margin: 0 0 12px; color: var(--muted); font-size: .85rem; display: flex; gap: 14px; flex-wrap: wrap; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; vertical-align: -1px; margin-right: 5px; }
+.ribbon {
+  display: grid; height: clamp(110px, 18vw, 170px);
+  border-radius: 6px; overflow: hidden; cursor: crosshair;
+  touch-action: pan-y; position: relative; background: var(--line);
+}
+.ribbon span { display: block; position: relative; }
+.ribbon span.past { opacity: .4; }
+.ribbon span.midnight { box-shadow: inset 1px 0 0 rgba(255,255,255,.55); }
+.ribbon span.now::after {
+  content: ""; position: absolute; inset: 0 auto 0 0; width: 2px; background: #F2C14E;
+}
+.ribbon span.sel { outline: 2px solid var(--ink); outline-offset: -2px; z-index: 1; }
+.ribbon.reveal span { animation: rise .5s ease-out both; }
+@keyframes rise { from { transform: scaleY(0); transform-origin: bottom; } to { transform: scaleY(1); transform-origin: bottom; } }
+@media (prefers-reduced-motion: reduce) { .ribbon.reveal span { animation: none; } }
+.ribbon-days { display: grid; margin-top: 6px; font-size: .85rem; color: var(--muted); }
+.ribbon-days span { padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: clip; border-left: 1px solid var(--line); }
+.ribbon-days span:first-child { border-left: 0; padding-left: 0; }
+.readout { margin: 12px 0 0; min-height: 3em; }
+.readout b { font-weight: 700; }
+
+/* Days */
+.days { padding: 0 0 24px; }
+.days ol { list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--ink); }
+.day {
+  display: grid; gap: 14px 24px; padding: 18px 0;
+  grid-template-columns: 11.5rem repeat(5, minmax(0, 1fr));
+  border-bottom: 1px solid var(--line);
+}
+.day-name { font-size: 1.25rem; font-weight: 700; margin: 0; line-height: 1.1; }
+.day-name small { display: block; font-size: .85rem; font-weight: 400; color: var(--muted); margin-top: 3px; }
+.day-temp { margin: 8px 0 0; font-size: 1.15rem; font-variation-settings: "wdth" 115; }
+.day-temp .lo { color: var(--muted); }
+.day-cond { margin: 2px 0 0; color: var(--muted); font-size: .9rem; }
+.m .k { display: block; color: var(--muted); font-size: .85rem; }
+.m .v { display: block; font-size: 1.5rem; font-weight: 600; font-variation-settings: "wdth" 112; line-height: 1.2; }
+.m .s { display: block; font-size: .88rem; color: var(--muted); }
+.cloudbar { display: block; height: 8px; border-radius: 4px; background: #6FA8D6; margin: 6px 0 4px; overflow: hidden; max-width: 140px; }
+.cloudbar b { display: block; height: 100%; background: #AEB8BF; }
+.uv-chip {
+  display: inline-block; font-size: .8rem; font-weight: 600; padding: 1px 8px;
+  border-radius: 999px; margin: 4px 0 2px; color: #1A1A1A;
+}
+@media (max-width: 960px) {
+  .day { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .day-head { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 6px 18px; flex-wrap: wrap; }
+  .day-temp, .day-cond { margin: 0; }
+}
+@media (max-width: 520px) {
+  .day { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Sea + footer */
+.sea {
+  margin: 0 0 32px; padding: 16px 0; border-bottom: 1px solid var(--line);
+  display: flex; gap: 8px 28px; flex-wrap: wrap; align-items: baseline;
+}
+.sea p { margin: 0; }
+.sea .v { font-size: 1.35rem; font-weight: 600; font-variation-settings: "wdth" 112; }
+.sea .k { color: var(--muted); font-size: .9rem; }
+footer { color: var(--muted); font-size: .85rem; padding: 0 0 40px; }
+footer a { color: inherit; }
+.error { color: #B3261E; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .error { color: #F2B8B5; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Rostock</h1>
+    <p class="status"><span id="updated" aria-live="polite">Loading…</span>
+      <button class="refresh" id="refresh" type="button">Refresh</button></p>
+  </header>
+
+  <section class="now" aria-label="Current conditions">
+    <p class="temp"><span id="t">–</span><span class="deg">°</span></p>
+    <div>
+      <p class="cond" id="cond">Fetching the sky over Rostock</p>
+      <p class="feels" id="feels"></p>
+    </div>
+    <dl class="now-stats">
+      <div><dt>Cloud cover</dt><dd id="n-cloud">–</dd></div>
+      <div><dt>UV index</dt><dd id="n-uv">–</dd></div>
+      <div><dt>Visibility</dt><dd id="n-vis">–</dd></div>
+      <div><dt>Wind</dt><dd id="n-wind">–</dd></div>
+      <div><dt>Humidity</dt><dd id="n-hum">–</dd></div>
+    </dl>
+  </section>
+
+  <section class="sky" aria-labelledby="sky-h">
+    <div class="sky-head">
+      <h2 id="sky-h">Cloud cover, hour by hour</h2>
+      <p class="legend">
+        <span><i style="background:#6FA8D6"></i>clear</span>
+        <span><i style="background:#AEB8BF"></i>overcast</span>
+        <span><i style="background:#1D2B45"></i>night</span>
+        <span><i style="background:#F2C14E"></i>now</span>
+      </p>
+    </div>
+    <div class="ribbon" id="ribbon" tabindex="0" role="slider" aria-label="Hourly cloud cover. Use arrow keys to move through the hours." aria-valuemin="0"></div>
+    <div class="ribbon-days" id="ribbon-days" aria-hidden="true"></div>
+    <p class="readout" id="readout" aria-live="polite">Tap or hover the band to read any hour.</p>
+  </section>
+
+  <section class="days" aria-labelledby="days-h">
+    <h2 id="days-h">Today and the next three days</h2>
+    <ol id="days"></ol>
+  </section>
+
+  <aside class="sea" id="sea" hidden aria-label="Baltic Sea at Warnemünde">
+    <p class="k">Baltic Sea at Warnemünde</p>
+    <p><span class="v" id="sea-t">–</span> <span class="k">water</span></p>
+    <p><span class="v" id="sea-w">–</span> <span class="k">waves</span></p>
+  </aside>
+
+  <footer>
+    <p>Weather data by <a href="https://open-meteo.com/">Open-Meteo.com</a> (CC BY 4.0). Cloud and visibility figures for each day are daylight averages. Refreshes every 15 minutes.</p>
+  </footer>
+</div>
+
+<script>
+(() => {
+  const LAT = 54.0887, LON = 12.1407;          // Rostock city centre
+  const SEA_LAT = 54.19, SEA_LON = 12.08;      // just off Warnemünde
+  const TZ = "Europe%2FBerlin";
+
+  const FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
+    + `?latitude=${LAT}&longitude=${LON}`
+    + "&current=temperature_2m,apparent_temperature,relative_humidity_2m,is_day,precipitation,weather_code,cloud_cover,wind_speed_10m,wind_direction_10m,wind_gusts_10m"
+    + "&hourly=temperature_2m,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,visibility,uv_index,precipitation_probability,is_day"
+    + "&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_direction_10m_dominant,sunshine_duration"
+    + `&timezone=${TZ}&forecast_days=4`;
+  const MARINE_URL = "https://marine-api.open-meteo.com/v1/marine"
+    + `?latitude=${SEA_LAT}&longitude=${SEA_LON}`
+    + `&hourly=wave_height,sea_surface_temperature&timezone=${TZ}&forecast_days=1`;
+
+  const CACHE_KEY = "rostock-sky-v1";
+  const REFRESH_MS = 15 * 60 * 1000;
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- helpers ----------
+  const isNum = (x) => typeof x === "number" && Number.isFinite(x);
+  const mean = (a) => { const v = a.filter(isNum); return v.length ? v.reduce((s, x) => s + x, 0) / v.length : NaN; };
+  const r0 = (x) => isNum(x) ? Math.round(x) : "–";
+  const hhmm = (s) => (s || "").slice(11, 16);
+
+  const WMO = {
+    0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
+    45: "Fog", 48: "Freezing fog",
+    51: "Light drizzle", 53: "Drizzle", 55: "Heavy drizzle",
+    56: "Light freezing drizzle", 57: "Freezing drizzle",
+    61: "Light rain", 63: "Rain", 65: "Heavy rain",
+    66: "Light freezing rain", 67: "Freezing rain",
+    71: "Light snow", 73: "Snow", 75: "Heavy snow", 77: "Snow grains",
+    80: "Light showers", 81: "Showers", 82: "Violent showers",
+    85: "Light snow showers", 86: "Snow showers",
+    95: "Thunderstorms", 96: "Thunderstorms with hail", 99: "Thunderstorms with heavy hail"
+  };
+  const wmo = (c) => WMO[c] ?? "–";
+
+  const COMPASS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  const compass = (deg) => isNum(deg) ? COMPASS[Math.round(deg / 45) % 8] : "";
+  const BFT = [1, 6, 12, 20, 29, 39, 50, 62, 75, 89, 103, 118];
+  const beaufort = (kmh) => { if (!isNum(kmh)) return NaN; let b = 0; while (b < BFT.length && kmh >= BFT[b]) b++; return b; };
+
+  function cloudWord(p) {
+    if (!isNum(p)) return "";
+    if (p < 13) return "clear";
+    if (p < 38) return "a few clouds";
+    if (p < 63) return "partly cloudy";
+    if (p < 88) return "mostly cloudy";
+    return "overcast";
+  }
+  function uvInfo(u) {
+    if (!isNum(u)) return { label: "–", bg: "transparent", fg: "inherit" };
+    if (u < 3) return { label: "Low", bg: "#7CC26A", fg: "#10240B" };
+    if (u < 6) return { label: "Moderate", bg: "#F7E400", fg: "#2A2600" };
+    if (u < 8) return { label: "High", bg: "#F88B1E", fg: "#2B1400" };
+    if (u < 11) return { label: "Very high", bg: "#D8001D", fg: "#FFFFFF" };
+    return { label: "Extreme", bg: "#6B49C8", fg: "#FFFFFF" };
+  }
+  function fmtVis(m) {
+    if (!isNum(m)) return "–";
+    const km = m / 1000;
+    if (km >= 20) return "20+ km";
+    if (km < 1) return km.toFixed(1) + " km";
+    return Math.round(km) + " km";
+  }
+  function visWord(m) {
+    if (!isNum(m)) return "";
+    const km = m / 1000;
+    if (km < 1) return "fog";
+    if (km < 4) return "mist or haze";
+    if (km < 10) return "moderate";
+    if (km < 20) return "good";
+    return "excellent";
+  }
+  function dayNames(dateStr, i) {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    const opt = (o) => dt.toLocaleDateString("en-GB", { ...o, timeZone: "UTC" });
+    return {
+      long: i === 0 ? "Today" : i === 1 ? "Tomorrow" : opt({ weekday: "long" }),
+      short: i === 0 ? "Today" : opt({ weekday: "short" }),
+      date: opt({ weekday: "short", day: "numeric", month: "short" })
+    };
+  }
+
+  // Sky colour: blend clear → overcast by cloud cover, day vs night palette.
+  const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const DAY_CLEAR = hex("#6FA8D6"), DAY_OVC = hex("#AEB8BF");
+  const NIGHT_CLEAR = hex("#1D2B45"), NIGHT_OVC = hex("#3F4852");
+  function skyColor(cloud, isDay) {
+    const t = isNum(cloud) ? Math.min(1, Math.max(0, cloud / 100)) : 0.5;
+    const a = isDay ? DAY_CLEAR : NIGHT_CLEAR, b = isDay ? DAY_OVC : NIGHT_OVC;
+    const c = a.map((v, k) => Math.round(v + (b[k] - v) * t));
+    return `rgb(${c[0]},${c[1]},${c[2]})`;
+  }
+
+  // ---------- state ----------
+  let model = null;   // { f, m, fetchedAt, nowIdx }
+  let sel = 0;
+  let firstRender = true;
+
+  function render(f, m, fetchedAt) {
+    const c = f.current, h = f.hourly, d = f.daily;
+    const hourKey = (c.time || "").slice(0, 13);
+    let nowIdx = h.time.findIndex((t) => t.startsWith(hourKey));
+    if (nowIdx < 0) nowIdx = 0;
+    model = { f, m, fetchedAt, nowIdx };
+    sel = nowIdx;
+
+    // Now
+    $("t").textContent = r0(c.temperature_2m);
+    $("cond").textContent = wmo(c.weather_code);
+    $("feels").textContent = isNum(c.apparent_temperature)
+      ? `Feels like ${Math.round(c.apparent_temperature)}°` + (c.precipitation > 0 ? `, ${c.precipitation} mm falling` : "")
+      : "";
+    $("n-cloud").innerHTML = `${r0(c.cloud_cover)}% <small>${cloudWord(c.cloud_cover)}</small>`;
+    const uvNow = h.uv_index[nowIdx];
+    $("n-uv").innerHTML = `${isNum(uvNow) ? uvNow.toFixed(1) : "–"} <small>${uvInfo(uvNow).label.toLowerCase()}</small>`;
+    const visNow = h.visibility[nowIdx];
+    $("n-vis").innerHTML = `${fmtVis(visNow)} <small>${visWord(visNow)}</small>`;
+    $("n-wind").innerHTML = `${r0(c.wind_speed_10m)} km/h <small>${compass(c.wind_direction_10m)}, ${beaufort(c.wind_speed_10m)} Bft` +
+      (isNum(c.wind_gusts_10m) ? `, gusts ${Math.round(c.wind_gusts_10m)}` : "") + `</small>`;
+    $("n-hum").textContent = `${r0(c.relative_humidity_2m)}%`;
+
+    // Group hourly indices by local date (robust to the 25-hour DST day).
+    const groups = {};
+    h.time.forEach((t, i) => { (groups[t.slice(0, 10)] ||= []).push(i); });
+
+    // Ribbon
+    const N = h.time.length;
+    const rib = $("ribbon");
+    rib.innerHTML = "";
+    rib.style.gridTemplateColumns = `repeat(${N}, 1fr)`;
+    rib.setAttribute("aria-valuemax", String(N - 1));
+    const frag = document.createDocumentFragment();
+    h.time.forEach((t, i) => {
+      const s = document.createElement("span");
+      s.style.background = skyColor(h.cloud_cover[i], h.is_day[i] === 1);
+      if (i < nowIdx) s.classList.add("past");
+      if (i === nowIdx) s.classList.add("now");
+      if (i > 0 && t.endsWith("T00:00")) s.classList.add("midnight");
+      if (firstRender) s.style.animationDelay = `${i * 5}ms`;
+      frag.appendChild(s);
+    });
+    rib.appendChild(frag);
+    rib.classList.toggle("reveal", firstRender);
+    firstRender = false;
+
+    const rd = $("ribbon-days");
+    rd.innerHTML = "";
+    rd.style.gridTemplateColumns = `repeat(${N}, 1fr)`;
+    let start = 0;
+    d.time.forEach((date, i) => {
+      const idxs = groups[date] || [];
+      if (!idxs.length) return;
+      const s = document.createElement("span");
+      s.style.gridColumn = `${idxs[0] + 1} / span ${idxs.length}`;
+      s.textContent = dayNames(date, i).short;
+      rd.appendChild(s);
+      start += idxs.length;
+    });
+
+    // Days
+    const ol = $("days");
+    ol.innerHTML = "";
+    d.time.forEach((date, i) => {
+      const idxs = groups[date] || [];
+      const lit = idxs.filter((k) => h.is_day[k] === 1);
+      const use = lit.length ? lit : idxs;
+      const cloud = mean(use.map((k) => h.cloud_cover[k]));
+      const layers = {
+        low: mean(use.map((k) => h.cloud_cover_low[k])),
+        mid: mean(use.map((k) => h.cloud_cover_mid[k])),
+        high: mean(use.map((k) => h.cloud_cover_high[k]))
+      };
+      const domLayer = Object.entries(layers).filter(([, v]) => isNum(v)).sort((a, b) => b[1] - a[1])[0];
+      const cloudSub = cloud < 13 || !domLayer ? cloudWord(cloud) : `${cloudWord(cloud)}, mainly ${domLayer[0]} cloud`;
+
+      const uvMax = d.uv_index_max[i];
+      let peak = -1;
+      idxs.forEach((k) => { if (isNum(h.uv_index[k]) && (peak < 0 || h.uv_index[k] > h.uv_index[peak])) peak = k; });
+      const uv = uvInfo(uvMax);
+
+      const vis = use.map((k) => h.visibility[k]).filter(isNum);
+      const vMin = vis.length ? Math.min(...vis) : NaN;
+      const vMax = vis.length ? Math.max(...vis) : NaN;
+      const visV = !isNum(vMin) ? "–" : (fmtVis(vMin) === fmtVis(vMax) ? fmtVis(vMin) : `${fmtVis(vMin).replace(" km", "")}–${fmtVis(vMax)}`);
+
+      const sunH = isNum(d.sunshine_duration[i]) ? d.sunshine_duration[i] / 3600 : NaN;
+      const names = dayNames(date, i);
+
+      const li = document.createElement("li");
+      li.className = "day";
+      li.innerHTML = `
+        <div class="day-head">
+          <p class="day-name">${names.long}<small>${names.date}</small></p>
+          <p class="day-temp">${r0(d.temperature_2m_max[i])}° <span class="lo">/ ${r0(d.temperature_2m_min[i])}°</span></p>
+          <p class="day-cond">${wmo(d.weather_code[i])}</p>
+        </div>
+        <div class="m"><span class="k">Cloud cover</span><span class="v">${r0(cloud)}%</span>
+          <span class="cloudbar" aria-hidden="true"><b style="width:${isNum(cloud) ? Math.round(cloud) : 0}%"></b></span>
+          <span class="s">${cloudSub}</span></div>
+        <div class="m"><span class="k">UV index</span><span class="v">${isNum(uvMax) ? uvMax.toFixed(1) : "–"}</span>
+          <span class="uv-chip" style="background:${uv.bg};color:${uv.fg}">${uv.label}</span>
+          <span class="s">${peak >= 0 && uvMax > 0.2 ? `peaks around ${hhmm(h.time[peak])}` : "no meaningful UV"}</span></div>
+        <div class="m"><span class="k">Visibility</span><span class="v">${visV}</span>
+          <span class="s">${isNum(vMin) ? `worst: ${visWord(vMin)}` : ""}</span></div>
+        <div class="m"><span class="k">Rain and wind</span><span class="v">${r0(d.precipitation_probability_max[i])}%</span>
+          <span class="s">${isNum(d.precipitation_sum[i]) ? d.precipitation_sum[i].toFixed(1) : "–"} mm, wind ${r0(d.wind_speed_10m_max[i])} km/h ${compass(d.wind_direction_10m_dominant[i])} (${beaufort(d.wind_speed_10m_max[i])} Bft)</span></div>
+        <div class="m"><span class="k">Sun</span><span class="v">${isNum(sunH) ? sunH.toFixed(1) + " h" : "–"}</span>
+          <span class="s">up ${hhmm(d.sunrise[i])}, down ${hhmm(d.sunset[i])}</span></div>`;
+      ol.appendChild(li);
+    });
+
+    // Sea
+    const sea = $("sea");
+    if (m && m.hourly && m.hourly.time) {
+      let k = m.hourly.time.findIndex((t) => t.startsWith(hourKey));
+      if (k < 0) k = 0;
+      const sst = m.hourly.sea_surface_temperature?.[k], wh = m.hourly.wave_height?.[k];
+      if (isNum(sst) || isNum(wh)) {
+        $("sea-t").textContent = isNum(sst) ? `${sst.toFixed(1)}°` : "–";
+        $("sea-w").textContent = isNum(wh) ? `${wh.toFixed(1)} m` : "–";
+        sea.hidden = false;
+      } else sea.hidden = true;
+    } else sea.hidden = true;
+
+    showHour(sel);
+  }
+
+  function showHour(i) {
+    if (!model) return;
+    const h = model.f.hourly, d = model.f.daily;
+    i = Math.max(0, Math.min(h.time.length - 1, i));
+    sel = i;
+    const rib = $("ribbon");
+    rib.querySelectorAll("span.sel").forEach((s) => s.classList.remove("sel"));
+    rib.children[i]?.classList.add("sel");
+    const date = h.time[i].slice(0, 10);
+    const di = d.time.indexOf(date);
+    const name = dayNames(date, di < 0 ? 9 : di).long;
+    const uv = h.uv_index[i];
+    const txt = `<b>${name} ${hhmm(h.time[i])}${i === model.nowIdx ? " (now)" : ""}:</b> ` +
+      `${r0(h.cloud_cover[i])}% cloud cover (low ${r0(h.cloud_cover_low[i])}, mid ${r0(h.cloud_cover_mid[i])}, high ${r0(h.cloud_cover_high[i])}). ` +
+      `Visibility ${fmtVis(h.visibility[i])}, UV ${isNum(uv) ? uv.toFixed(1) : "–"}, ` +
+      `${r0(h.temperature_2m[i])}°, rain chance ${r0(h.precipitation_probability[i])}%.`;
+    $("readout").innerHTML = txt;
+    rib.setAttribute("aria-valuenow", String(i));
+    rib.setAttribute("aria-valuetext", $("readout").textContent);
+  }
+
+  // Ribbon interaction
+  const rib = $("ribbon");
+  const idxFromEvent = (e) => {
+    const r = rib.getBoundingClientRect();
+    const n = rib.children.length || 1;
+    return Math.floor(((e.clientX - r.left) / r.width) * n);
+  };
+  rib.addEventListener("pointermove", (e) => showHour(idxFromEvent(e)));
+  rib.addEventListener("pointerdown", (e) => showHour(idxFromEvent(e)));
+  rib.addEventListener("keydown", (e) => {
+    const step = { ArrowRight: 1, ArrowLeft: -1, ArrowUp: 1, ArrowDown: -1, PageUp: 6, PageDown: -6 }[e.key];
+    if (step) { e.preventDefault(); showHour(sel + step); }
+    else if (e.key === "Home") { e.preventDefault(); showHour(0); }
+    else if (e.key === "End") { e.preventDefault(); showHour(rib.children.length - 1); }
+  });
+
+  // ---------- data ----------
+  const timeStr = (ms) => new Date(ms).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Berlin" });
+
+  async function getJSON(url) {
+    const ctl = new AbortController();
+    const to = setTimeout(() => ctl.abort(), 12000);
+    try {
+      const res = await fetch(url, { signal: ctl.signal });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    } finally { clearTimeout(to); }
+  }
+
+  function readCache() { try { return JSON.parse(localStorage.getItem(CACHE_KEY)); } catch { return null; } }
+  function writeCache(v) { try { localStorage.setItem(CACHE_KEY, JSON.stringify(v)); } catch { /* storage unavailable */ } }
+
+  let loading = false;
+  async function load() {
+    if (loading) return;
+    loading = true;
+    const btn = $("refresh");
+    btn.disabled = true;
+    try {
+      const [f, m] = await Promise.all([getJSON(FORECAST_URL), getJSON(MARINE_URL).catch(() => null)]);
+      const fetchedAt = Date.now();
+      render(f, m, fetchedAt);
+      writeCache({ f, m, fetchedAt });
+      $("updated").className = "";
+      $("updated").textContent = `Updated ${timeStr(fetchedAt)}`;
+    } catch (err) {
+      const cached = model || readCache();
+      $("updated").className = "error";
+      if (cached) {
+        if (!model) render(cached.f, cached.m, cached.fetchedAt);
+        $("updated").textContent = `Couldn't reach Open-Meteo. Showing data from ${timeStr(cached.fetchedAt)}.`;
+      } else {
+        $("updated").textContent = "Couldn't reach Open-Meteo. Check your connection and press Refresh.";
+        $("cond").textContent = "No forecast yet";
+      }
+    } finally {
+      loading = false;
+      btn.disabled = false;
+    }
+  }
+
+  $("refresh").addEventListener("click", load);
+  setInterval(load, REFRESH_MS);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && model && Date.now() - model.fetchedAt > 10 * 60 * 1000) load();
+  });
+
+  const cached = readCache();
+  if (cached && cached.f) {
+    try {
+      render(cached.f, cached.m, cached.fetchedAt);
+      $("updated").textContent = `Updating… last ${timeStr(cached.fetchedAt)}`;
+    } catch { /* stale cache shape */ }
+  }
+  load();
+})();
+</script>
+</body>
+</html>
