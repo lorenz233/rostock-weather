@@ -408,7 +408,6 @@ footer a { color: inherit; }
           <span class="s">${isNum(d.precipitation_sum[i]) ? d.precipitation_sum[i].toFixed(1) : "–"} mm, wind ${r0(d.wind_speed_10m_max[i])} km/h ${compass(d.wind_direction_10m_dominant[i])} (${beaufort(d.wind_speed_10m_max[i])} Bft)</span></div>
         <div class="m"><span class="k">Sunshine</span>
           <span class="v sunv">${sunIcon}<span>${sunTxt}</span></span>
-          <span class="s">${isNum(dayLen) ? `of ${Math.round(dayLen)} h daylight` : ""}</span>
           <span class="s riseset"><span title="Sunrise">${ICON_RISE}${hhmm(d.sunrise[i])}</span><span title="Sunset">${ICON_SET}${hhmm(d.sunset[i])}</span></span></div>`;
       ol.appendChild(li);
     });
