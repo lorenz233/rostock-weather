@@ -155,6 +155,11 @@ h2 { font-size: 1.1rem; font-weight: 700; margin: 0 0 12px; }
 .m .k { display: block; color: var(--muted); font-size: .85rem; }
 .m .v { display: block; font-size: 1.5rem; font-weight: 600; font-variation-settings: "wdth" 112; line-height: 1.2; }
 .m .s { display: block; font-size: .88rem; color: var(--muted); }
+.sunv { display: flex; align-items: center; gap: 8px; }
+.sunv .ic { width: 1.7rem; height: 1.7rem; flex: none; }
+.m .riseset { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 2px; }
+.m .riseset > span { display: inline-flex; align-items: center; gap: 4px; }
+.ic-s { width: 1.3em; height: 1.3em; flex: none; }
 .cloudbar { display: block; height: 8px; border-radius: 4px; background: #6FA8D6; margin: 6px 0 4px; overflow: hidden; max-width: 140px; }
 .cloudbar b { display: block; height: 100%; background: #AEB8BF; }
 .uv-chip {
@@ -377,6 +382,11 @@ footer a { color: inherit; }
       const visV = !isNum(vMin) ? "–" : (fmtVis(vMin) === fmtVis(vMax) ? fmtVis(vMin) : `${fmtVis(vMin).replace(" km", "")}–${fmtVis(vMax)}`);
 
       const sunH = isNum(d.sunshine_duration[i]) ? d.sunshine_duration[i] / 3600 : NaN;
+      const dayLen = (toMin(d.sunset[i]) - toMin(d.sunrise[i])) / 60;
+      const sunRounded = Math.round(sunH);
+      const sunTxt = !isNum(sunH) ? "–" : (sunRounded === 0 && sunH >= 0.1 ? "<1 h" : `${sunRounded} h`);
+      const share = isNum(sunH) && dayLen > 0 ? sunH / dayLen : 0;
+      const sunIcon = share >= 0.45 ? ICON_SUN : share >= 0.12 ? ICON_PART : ICON_CLOUD;
       const names = dayNames(date, i);
 
       const li = document.createElement("li");
@@ -393,12 +403,13 @@ footer a { color: inherit; }
         <div class="m"><span class="k">UV index</span><span class="v">${isNum(uvMax) ? uvMax.toFixed(1) : "–"}</span>
           <span class="uv-chip" style="background:${uv.bg};color:${uv.fg}">${uv.label}</span>
           <span class="s">${peak >= 0 && uvMax > 0.2 ? `peaks around ${hhmm(h.time[peak])}` : "no meaningful UV"}</span></div>
-        <div class="m"><span class="k">Visibility</span><span class="v">${visV}</span>
-          <span class="s">${isNum(vMin) ? `worst: ${visWord(vMin)}` : ""}</span></div>
+        <div class="m"><span class="k">Visibility</span><span class="v">${visV}</span></div>
         <div class="m"><span class="k">Rain and wind</span><span class="v">${r0(d.precipitation_probability_max[i])}%</span>
           <span class="s">${isNum(d.precipitation_sum[i]) ? d.precipitation_sum[i].toFixed(1) : "–"} mm, wind ${r0(d.wind_speed_10m_max[i])} km/h ${compass(d.wind_direction_10m_dominant[i])} (${beaufort(d.wind_speed_10m_max[i])} Bft)</span></div>
-        <div class="m"><span class="k">Sun</span><span class="v">${isNum(sunH) ? sunH.toFixed(1) + " h" : "–"}</span>
-          <span class="s">up ${hhmm(d.sunrise[i])}, down ${hhmm(d.sunset[i])}</span></div>`;
+        <div class="m"><span class="k">Sunshine</span>
+          <span class="v sunv">${sunIcon}<span>${sunTxt}</span></span>
+          <span class="s">${isNum(dayLen) ? `of ${Math.round(dayLen)} h daylight` : ""}</span>
+          <span class="s riseset"><span title="Sunrise">${ICON_RISE}${hhmm(d.sunrise[i])}</span><span title="Sunset">${ICON_SET}${hhmm(d.sunset[i])}</span></span></div>`;
       ol.appendChild(li);
     });
 
@@ -416,6 +427,16 @@ footer a { color: inherit; }
     } else sea.hidden = true;
 
   }
+
+  // ---------- small icons ----------
+  const SUN_C = "#F2B705", CLOUD_C = "#A3AEB7";
+  const rays = `<g stroke="${SUN_C}" stroke-width="2" stroke-linecap="round"><path d="M12 1.5v2.6M12 19.9v2.6M1.5 12h2.6M19.9 12h2.6M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></g>`;
+  const cloudPath = (dx, dy, k) => `<path transform="translate(${dx} ${dy}) scale(${k})" d="M7 20h10.5a4.2 4.2 0 0 0 .6-8.36A5.8 5.8 0 0 0 6.9 12.9 3.6 3.6 0 0 0 7 20z" fill="${CLOUD_C}"/>`;
+  const ICON_SUN = `<svg class="ic" viewBox="0 0 24 24" aria-label="Mostly sunny" role="img">${rays}<circle cx="12" cy="12" r="5" fill="${SUN_C}"/></svg>`;
+  const ICON_PART = `<svg class="ic" viewBox="0 0 24 24" aria-label="Some sun" role="img"><g transform="translate(-3 -3) scale(.85)">${rays}<circle cx="12" cy="12" r="5" fill="${SUN_C}"/></g>${cloudPath(2, 3, 0.9)}</svg>`;
+  const ICON_CLOUD = `<svg class="ic" viewBox="0 0 24 24" aria-label="Little sun" role="img">${cloudPath(0, -1, 1)}</svg>`;
+  const ICON_RISE = `<svg class="ic-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17a6 6 0 0 1 12 0z" fill="${SUN_C}"/><path d="M2 20h20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 9V2.5M9 5.5l3-3 3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const ICON_SET = `<svg class="ic-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17a6 6 0 0 1 12 0z" fill="${SUN_C}"/><path d="M2 20h20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 2.5V9M9 6l3 3 3-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
   // ---------- scene ----------
   const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
